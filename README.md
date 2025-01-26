@@ -16,6 +16,7 @@ sudo home-watcher
 | `-e, --excluded-dirs` | Specify additional directories to exclude from monitoring (relative to your home directory). | None                            |
 | `-l, --log-file`      | Path to the SQLite database file for logging.                                                | `XDG_DATA_HOME/home-watcher.db` |
 | `-i, --interval`      | Interval (in milliseconds) to check audit logs.                                              | 1500                            |
+| `-u, --user`          | The user to watch the home directory of.                                                     | Executing user                  |
 | `-h, --help`          | Display the help message with usage details.                                                 |                                 |
 | `-V, --version`       | Display the current version of `home-watcher`.                                               |                                 |
 
