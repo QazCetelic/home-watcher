@@ -3,6 +3,12 @@ name = "home-watcher"
 version = "0.1.0"
 edition = "2021"
 
+[profile.release]
+strip = true  # Automatically strip symbols from the binary.
+opt-level = "z"  # Optimize for size.
+lto = true
+codegen-units = 1
+
 [dependencies]
 clap = { version = "4.5.27", features = ["derive", "string"] }
 rusqlite = { version = "0.33.0", features = ["bundled"] }
