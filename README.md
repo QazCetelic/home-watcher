@@ -11,14 +11,15 @@ sudo home-watcher
 ```
 
 ### Options
-| Option                | Description                                                                                  | Default                         |
-|-----------------------|----------------------------------------------------------------------------------------------|---------------------------------|
-| `-e, --excluded-dirs` | Specify additional directories to exclude from monitoring (relative to your home directory). | None                            |
-| `-l, --log-file`      | Path to the SQLite database file for logging.                                                | `XDG_DATA_HOME/home-watcher.db` |
-| `-i, --interval`      | Interval (in milliseconds) to check audit logs.                                              | 1500                            |
-| `-u, --user`          | The user to watch the home directory of.                                                     | Executing user                  |
-| `-h, --help`          | Display the help message with usage details.                                                 |                                 |
-| `-V, --version`       | Display the current version of `home-watcher`.                                               |                                 |
+| Option                         | Description                                                                                  | Default                         |
+|--------------------------------|----------------------------------------------------------------------------------------------|---------------------------------|
+| `-d`, `--excluded-dirs`        | Specify additional directories to exclude from monitoring (relative to your home directory). | None                            |
+| `-e`, `--excluded-executables` | Specify executables to exclude from monitoring                                               | None                            |
+| `-l`, `--log-file`             | Path to the SQLite database file for logging.                                                | `XDG_DATA_HOME/home-watcher.db` |
+| `-i`, `--interval`             | Interval (in milliseconds) to check audit logs.                                              | 1500                            |
+| `-u`, `--user`                 | The user to watch the home directory of.                                                     | Executing user                  |
+| `-h`, `--help`                 | Display the help message with usage details.                                                 |                                 |
+| `-V`, `--version`              | Display the current version of `home-watcher`.                                               |                                 |
 
 Note: Common user directories like `Documents`, `Downloads`, `Pictures`, `Videos`, `Desktop`, and `Music` are excluded by default.
 
@@ -41,6 +42,7 @@ Note: Common user directories like `Documents`, `Downloads`, `Pictures`, `Videos
 
 ## Database
 The database contains an `interactions` table with the following data.
+
 | **Name**   | **Column** | **Description**                                          |
 |------------|------------|----------------------------------------------------------|
 | **Id**     | `id`       | Identifies a specific interaction                        |
