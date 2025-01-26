@@ -31,18 +31,21 @@ struct Args {
     /// Interval to check audit logs in milliseconds
     #[clap(short, long, default_value_t = 1500)]
     pub interval: u64,
+
+    /// The user to watch the home directory of
+    #[clap(short, long, default_value_t = get_user())]
+    pub user: String
 }
 
 fn main() {
     let args = Args::parse();
-    let user = get_user();
-    let user_env = UserEnvironment::from_user(&user).expect("Failed to get user env");
-    let std_dirs = StandardDirectories::new(&user, &user_env);
+    let user_env = UserEnvironment::from_user(&args.user).expect("Failed to get user env");
+    let std_dirs = StandardDirectories::new(&args.user, &user_env);
     println!("Watching {}", std_dirs.home());
     let excluded_dirs= get_excluded_directories(&std_dirs, &args.excluded_dirs);
     let excluded_dirs_str = excluded_dirs.join(", ");
     println!("Excluding {excluded_dirs_str}");
-    let db_file = create_db_file(&std_dirs, &user);
+    let db_file = create_db_file(&std_dirs, &args.user);
     let conn = open_db(&db_file);
 
     let auditd_rules = file_audit::generate_audit_rules(std_dirs.home(), &excluded_dirs);
