@@ -39,7 +39,7 @@ Note: Common user directories like `Documents`, `Downloads`, `Pictures`, `Videos
    ```
 
 ## Database
-The database contains an `interaction` table with the following data.
+The database contains an `interactions` table with the following data.
 | **Name**   | **Column** | **Description**                                          |
 |------------|------------|----------------------------------------------------------|
 | **Id**     | `id`       | Identifies a specific interaction                        |
