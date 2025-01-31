@@ -1,5 +1,5 @@
 use crate::file_audit::AUDITD_RULE_TAG;
-use crate::time::{Date, Time};
+use crate::time::{Date, DateTime, Time};
 
 const EXPECTED_HEADER: &str = "NODE,EVENT,DATE,TIME,SERIAL_NUM,EVENT_KIND,SESSION,SUBJ_PRIME,SUBJ_SEC,SUBJ_KIND,ACTION,RESULT,OBJ_PRIME,OBJ_SEC,OBJ_KIND,HOW";
 const _COLUMN_NODE: usize = 0;
@@ -37,16 +37,16 @@ where I: Iterator<Item = String>,
 }
 
 pub struct Interaction {
-    date: Date,
-    time: Time,
+    date_time: DateTime,
     /// File that was interacted with
     file: String,
     /// Executable that interacted with the file
     source: String,
 }
 impl Interaction {
-    pub fn date(&self) -> &Date { &self.date }
-    pub fn time(&self) -> &Time { &self.time }
+    pub fn date(&self) -> &Date { &self.date_time.date }
+    pub fn time(&self) -> &Time { &self.date_time.time }
+    pub fn datetime(&self) -> &DateTime { &self.date_time }
     pub fn file(&self) -> &str { &self.file }
     pub fn source(&self) -> &str { &self.source }
 }
@@ -73,15 +73,17 @@ fn parse_row(row: String) -> Option<Interaction> {
     if file == AUDITD_RULE_TAG {
         panic!("Parsing failed:\n{row}");
     }
-    Some(Interaction {
+    let datetime = DateTime {
         date: Date::from_str(columns.get(COLUMN_DATE)?)?,
-        time: Time::from_str(columns.get(COLUMN_TIME)?)?,
+        time: Time::from_str(columns.get(COLUMN_TIME)?)?
+    };
+    Some(Interaction {
+        date_time: datetime,
         file: file,
         source: source,
     })
 }
 
-// test_parse_csv
 #[test]
 fn test_parse_csv() {
     let input = vec![
@@ -91,12 +93,12 @@ fn test_parse_csv() {
     let lines = input.into_iter();
     let interactions = parse_csv(lines);
     assert_eq!(interactions.len(), 1);
-    assert_eq!(interactions[0].date.year(), 2025);
-    assert_eq!(interactions[0].date.month(), 1);
-    assert_eq!(interactions[0].date.day(), 25);
-    assert_eq!(interactions[0].time.hour(), 12);
-    assert_eq!(interactions[0].time.minute(), 55);
-    assert_eq!(interactions[0].time.second(), 3);
+    assert_eq!(interactions[0].date_time.date.year(), 2025);
+    assert_eq!(interactions[0].date_time.date.month(), 1);
+    assert_eq!(interactions[0].date_time.date.day(), 25);
+    assert_eq!(interactions[0].date_time.time.hour(), 12);
+    assert_eq!(interactions[0].date_time.time.minute(), 55);
+    assert_eq!(interactions[0].date_time.time.second(), 3);
     assert_eq!(interactions[0].file, "/home/user/.config/Nextcloud//logs/20250125_1255_nextcloud.log.2");
     assert_eq!(interactions[0].source, "/usr/bin/nextcloud");
 }

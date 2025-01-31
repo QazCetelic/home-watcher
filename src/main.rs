@@ -1,11 +1,11 @@
-use std::collections::HashSet;
-use crate::database::{insert_interaction, open_db, query_latest_interaction_time};
+use crate::database::open_db;
 use crate::file_audit::read_logs;
 use crate::standard_dirs::StandardDirectories;
 use crate::time::DateTime;
 use crate::user_env::UserEnvironment;
 use crate::util::{create_db_file, get_default_db_path, get_excluded_directories, get_user};
 use clap::Parser;
+use std::collections::HashSet;
 use std::path::PathBuf;
 use std::thread::sleep;
 use std::time::Duration;
@@ -70,7 +70,7 @@ fn main() {
     if !rule_active {
         file_audit::add_audit_rules(&auditd_rules).expect("Failed to add rule");
     }
-    let mut datetime: Option<DateTime> = query_latest_interaction_time(&conn).expect("Failed to query DB");
+    let mut datetime: Option<DateTime> = database::query_latest_time(&conn).unwrap_or(None);
     if let Some(dt) = &datetime {
         println!("Starting from {} {}", dt.date.to_ymd_string(), dt.time.to_hms_string());
     }
@@ -85,7 +85,7 @@ fn main() {
             if excluded_executables.contains(interaction.source()) {
                 continue 'interactions;
             }
-            insert_interaction(&conn, interaction);
+            database::add_entry(&conn, interaction.file(), interaction.source(), interaction.datetime() );
         }
         datetime = interactions.last().map(|i| DateTime { date: i.date().clone(), time: i.time().clone() } );
         sleep(Duration::from_millis(args.interval));
