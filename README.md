@@ -41,14 +41,15 @@ Note: Common user directories like `Documents`, `Downloads`, `Pictures`, `Videos
    ```
 
 ## Database
-The database contains an `interactions` table with the following data.
+The database contains an `files` table with the following data:
 
-| **Name**   | **Column** | **Description**                                          |
-|------------|------------|----------------------------------------------------------|
-| **Id**     | `id`       | Identifies a specific interaction                        |
-| **Time**   | multiple   | When the file or directory was created                   |
-| **File**   | `file`     | The location of the newly created file or directory      |
-| **Source** | `source`   | The path of the program responsible for the creation     |
+| **Name**         | **Column**      | **Description**                                                             |
+|------------------|-----------------|-----------------------------------------------------------------------------|
+| **File**         | `file` 🔑       | The location of the newly created file or directory                         |
+| **Executable**   | `executable` 🔑 | The path of the program responsible for the creation                        |
+| **Time added**   | `added_at`      | When the file - executable entry was first added                            |
+| **Time changed** | `changed_at`    | When the file - executable entry was last changed                           |
+| **Total count**  | `count`         | The total amount of times the executable was detected modifying to the file |
 
 ## Contributing
 
