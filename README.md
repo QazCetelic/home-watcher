@@ -43,13 +43,13 @@ Note: Common user directories like `Documents`, `Downloads`, `Pictures`, `Videos
 ## Database
 The database contains an `files` table with the following data:
 
-| **Name**         | **Column**      | **Description**                                                             |
-|------------------|-----------------|-----------------------------------------------------------------------------|
-| **File**         | `file` 🔑       | The location of the newly created file or directory                         |
-| **Executable**   | `executable` 🔑 | The path of the program responsible for the creation                        |
-| **Time added**   | `added_at`      | When the file - executable entry was first added                            |
-| **Time changed** | `changed_at`    | When the file - executable entry was last changed                           |
-| **Total count**  | `count`         | The total amount of times the executable was detected modifying to the file |
+| **Name**         | **Column**      | **Description**                                                          |
+|------------------|-----------------|--------------------------------------------------------------------------|
+| **File**         | `file` 🔑       | The location of the modified file or directory                           |
+| **Executable**   | `executable` 🔑 | The path of the program responsible for modifying the file               |
+| **Time added**   | `added_at`      | When the file - executable entry was first added                         |
+| **Time changed** | `changed_at`    | When the file - executable entry was last changed                        |
+| **Total count**  | `count`         | The total amount of times the executable was detected modifying the file |
 
 ## Contributing
 
