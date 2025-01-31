@@ -1,6 +1,6 @@
 use crate::ausearch_parse::{parse_csv, Interaction};
 use crate::time::DateTime;
-use std::io::BufRead;
+use std::io::{BufRead, Read};
 use std::process::{Command, Output, Stdio};
 
 pub const AUDITD_RULE_TAG: &str = "home_watcher_rule";

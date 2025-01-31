@@ -24,7 +24,7 @@ pub fn parse_csv<I>(mut lines: I) -> Vec<Interaction>
 where I: Iterator<Item = String>,
 {
     let mut interactions: Vec<Interaction> = Vec::new();
-    let header = lines.next().expect("Output is empty");
+    let header = if let Some(h) = lines.next() { h } else { return interactions; };
     if header != EXPECTED_HEADER {
         panic!("Unexpected header")
     }
