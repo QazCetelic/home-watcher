@@ -40,8 +40,8 @@ Note: Common user directories like `Documents`, `Downloads`, `Pictures`, `Videos
    sudo mv target/release/home-watcher /usr/local/bin/
    ```
    
-3. **Install the systemd service**  
-   Make sure to change <USER> in home-watcher.service
+3. **(Optional) Install the systemd service**  
+   Make sure to change `<USER>` in `home-watcher.service`
    ```bash
    sudo cp ./home-watcher.service /etc/systemd/system/home-watcher.service
    sudo systemctl enable home-watcher.service --now
