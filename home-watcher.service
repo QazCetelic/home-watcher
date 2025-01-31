@@ -1,0 +1,11 @@
+[Unit]
+Description=Log creation of non-standard home directory files
+After=basic.target
+
+[Service]
+Restart=on-failure
+Type=simple
+ExecStart=/usr/local/bin/home-watcher --user <USER> --excluded-dirs .var
+
+[Install]
+WantedBy=multi-user.target

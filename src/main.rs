@@ -6,6 +6,7 @@ use crate::user_env::UserEnvironment;
 use crate::util::{create_db_file, get_default_db_path, get_excluded_directories, get_user};
 use clap::Parser;
 use std::collections::HashSet;
+use std::env::set_var;
 use std::path::PathBuf;
 use std::thread::sleep;
 use std::time::Duration;
@@ -43,6 +44,9 @@ struct Args {
 }
 
 fn main() {
+    // Use IS8601 / RFC3339 date (YYYY-MM-DD) to avoid issues with ausearch
+    set_var("LC_TIME", "en_DK.UTF-8");
+
     let args = Args::parse();
     let mut excluded_executables: HashSet<String> = Default::default();
     let excluded_executables_str: String;

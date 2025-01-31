@@ -25,7 +25,7 @@ Note: Common user directories like `Documents`, `Downloads`, `Pictures`, `Videos
 
 ## Installation
 
-1. **Build from Source**  
+1. **Build from source**  
    Clone the repository and compile the Rust project:
    ```bash
    git clone https://github.com/QazCetelic/home-watcher.git
@@ -34,10 +34,17 @@ Note: Common user directories like `Documents`, `Downloads`, `Pictures`, `Videos
    ```
    The compiled binary will be available in the `target/release` directory.
 
-2. **Install the Binary**  
+2. **Install the binary**  
    Move the binary to a directory in your `PATH`, such as `/usr/local/bin`:
    ```bash
    sudo mv target/release/home-watcher /usr/local/bin/
+   ```
+   
+3. **Install the systemd service**  
+   Make sure to change <USER> in home-watcher.service
+   ```bash
+   sudo cp ./home-watcher.service /etc/systemd/system/home-watcher.service
+   sudo systemctl enable home-watcher.service --now
    ```
 
 ## Database
