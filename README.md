@@ -1,7 +1,7 @@
 # `home-watcher`
 
 `home-watcher` is a Linux utility that monitors your home directory for file creation activities outside of the [XDG Base Directory Specification](https://specifications.freedesktop.org/basedir-spec/latest/) and logs these interactions into an SQLite database.
-It's usefull for finding out which applications keep creating random files with such incredibly descriptive names such as `-6000.`, `.swo`, and `.serverauth.11972` 🤔.
+It's useful for finding out which applications keep creating random files with such incredibly descriptive names such as `-6000.`, `.swo`, and `.serverauth.11972` 🤔.
 
 ## Usage
 
