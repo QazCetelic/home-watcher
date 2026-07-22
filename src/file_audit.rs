@@ -1,10 +1,9 @@
 use crate::ausearch_parse::{parse_csv, Interaction};
 use crate::time::DateTime;
-use std::io::{BufRead, Read};
+use std::io::BufRead;
 use std::process::{Command, Output, Stdio};
 
 pub const AUDITD_RULE_TAG: &str = "home_watcher_rule";
-const AUDITCTL_EXECUTABLE: &str = "/usr/sbin/auditctl";
 
 pub fn generate_audit_rules(home_dir: &str, _excluded_dirs: &Vec<String>) -> Vec<String> {
     let mut rules = Vec::new();
@@ -15,8 +14,8 @@ pub fn generate_audit_rules(home_dir: &str, _excluded_dirs: &Vec<String>) -> Vec
     return rules;
 }
 
-pub fn audit_rules_active(expected_rules: &Vec<String>) -> bool {
-    let output: Output = Command::new(AUDITCTL_EXECUTABLE)
+pub fn audit_rules_active(expected_rules: &Vec<String>, auditctl: &str) -> bool {
+    let output: Output = Command::new(auditctl)
         .arg("-l")
         .stdout(Stdio::piped())
         .stderr(Stdio::null())
@@ -26,9 +25,9 @@ pub fn audit_rules_active(expected_rules: &Vec<String>) -> bool {
     return expected_rules.iter().all(|er| active_rules.any(|ar| er == &ar ));
 }
 
-pub fn add_audit_rules(rules: &Vec<String>) -> Result<(), String> {
+pub fn add_audit_rules(rules: &Vec<String>, auditctl: &str) -> Result<(), String> {
     for rule in rules {
-        let mut process = Command::new(AUDITCTL_EXECUTABLE)
+        let mut process = Command::new(auditctl)
             .args(rule.split(" "))
             .spawn()
             .map_err(|e| e.to_string())?;
@@ -37,8 +36,8 @@ pub fn add_audit_rules(rules: &Vec<String>) -> Result<(), String> {
     return Ok(());
 }
 
-pub fn read_logs(datetime: &Option<DateTime>) -> Vec<Interaction> {
-    let mut command = Command::new("ausearch");
+pub fn read_logs(datetime: &Option<DateTime>, ausearch: &str) -> Vec<Interaction> {
+    let mut command = Command::new(ausearch);
     command
         .arg("-k")
         .arg(AUDITD_RULE_TAG)
