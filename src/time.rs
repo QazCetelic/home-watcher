@@ -23,9 +23,9 @@ impl Date {
             day,
         }
     }
-    pub fn year(&self) -> usize { self.year }
-    pub fn month(&self) -> usize { self.month }
-    pub fn day(&self) -> usize { self.day }
+    #[allow(dead_code)] pub fn year(&self) -> usize { self.year }
+    #[allow(dead_code)] pub fn month(&self) -> usize { self.month }
+    #[allow(dead_code)] pub fn day(&self) -> usize { self.day }
     pub fn to_ymd_string(&self) -> String { format!("{:02}-{:02}-{:02}", self.year, self.month, self.day) }
 }
 
@@ -52,9 +52,9 @@ impl Time {
             second,
         }
     }
-    pub fn hour(&self) -> usize { self.hour }
-    pub fn minute(&self) -> usize { self.minute }
-    pub fn second(&self) -> usize { self.second }
+    #[allow(dead_code)] pub fn hour(&self) -> usize { self.hour }
+    #[allow(dead_code)] pub fn minute(&self) -> usize { self.minute }
+    #[allow(dead_code)] pub fn second(&self) -> usize { self.second }
     pub fn to_hms_string(&self) -> String { format!("{:02}:{:02}:{:02}", self.hour, self.minute, self.second) }
 }
 

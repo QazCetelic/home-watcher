@@ -1,3 +1,6 @@
+use log::error;
+use log::info;
+
 use crate::standard_dirs::StandardDirectories;
 use crate::user_env::UserEnvironment;
 use std::fs::OpenOptions;
@@ -6,16 +9,17 @@ use std::os::unix::fs::chown;
 use std::os::unix::fs::MetadataExt;
 use std::path::PathBuf;
 use std::process::Command;
+use std::process::Stdio;
 
 // TODO Documents is sometimes abused to store program files, create an option to watch it regardless
 pub const DEFAULT_DIRECTORIES: [&str; 6] = ["Documents", "Downloads", "Pictures", "Videos", "Desktop", "Music"];
 
 pub fn get_user() -> String {
-    if let Ok(logname_output) = Command::new("logname").output() {
+    if let Ok(logname_output) = Command::new("logname").stderr(Stdio::null()).output() {
         String::from_utf8(logname_output.stdout).expect("Failed to get stdout from logname").trim_end().to_string()
     }
     else {
-        let who_output = Command::new("who").output().expect("Failed to execute who");
+        let who_output = Command::new("who").stderr(Stdio::null()).output().expect("Failed to execute who");
         let mut lines = who_output.stdout.lines();
         let first_line = lines.next().unwrap().unwrap();
         first_line.split_once(" ").unwrap().0.to_string()
@@ -52,7 +56,7 @@ pub fn get_excluded_directories(std_dirs: &StandardDirectories, args_excluded_di
 
 pub fn create_db_file(std_dirs: &StandardDirectories) -> String {
     let db_path = get_db_path(&std_dirs);
-    println!("Opening database at {db_path:?}");
+    info!("Opening database at {db_path:?}");
 
     OpenOptions::new()
         .write(true)
@@ -64,7 +68,7 @@ pub fn create_db_file(std_dirs: &StandardDirectories) -> String {
     let uid = home_metadata.uid();
     let gid = home_metadata.gid();
     if let Err(e) = chown(&db_path, Some(uid), Some(gid)) {
-        eprintln!("Failed to set ownership of DB file at {db_path:?} to UID {uid}:{gid}, error: {e:?}");
+        error!("Failed to set ownership of DB file at {db_path:?} to UID {uid}:{gid}, error: {e:?}");
     }
 
     db_path

@@ -5,6 +5,7 @@ use crate::time::DateTime;
 use crate::user_env::UserEnvironment;
 use crate::util::{create_db_file, get_default_db_path, get_excluded_directories, get_user};
 use clap::{Parser, Subcommand};
+use log::info;
 use std::collections::HashSet;
 use std::env::set_var;
 use std::path::PathBuf;
@@ -62,6 +63,8 @@ enum Commands {
 }
 
 fn main() {
+    env_logger::init();
+
     // Use IS8601 / RFC3339 date (YYYY-MM-DD) to avoid issues with ausearch
     set_var("LC_TIME", "en_DK.UTF-8");
 
@@ -150,13 +153,13 @@ fn monitor(args: Args) {
     else {
         excluded_executables_str = "".to_string();
     }
-    println!("Excluding directories: {excluded_executables_str}");
+    info!("Excluding executables: {excluded_executables_str}");
     let user_env = UserEnvironment::from_user(&args.user).expect("Failed to get user env");
     let std_dirs = StandardDirectories::new(&args.user, &user_env);
-    println!("Watching {}", std_dirs.home());
+    info!("Watching {}", std_dirs.home());
     let excluded_dirs= get_excluded_directories(&std_dirs, &args.excluded_dirs);
     let excluded_dirs_str = excluded_dirs.join(", ");
-    println!("Excluding directories: {excluded_dirs_str}");
+    info!("Excluding directories: {excluded_dirs_str}");
     let db_file = create_db_file(&std_dirs);
     let conn = open_db(&db_file);
 
@@ -167,7 +170,7 @@ fn monitor(args: Args) {
     }
     let mut datetime: Option<DateTime> = database::query_latest_time(&conn).unwrap_or(None);
     if let Some(dt) = &datetime {
-        println!("Starting from {} {}", dt.date.to_ymd_string(), dt.time.to_hms_string());
+        info!("Starting from {} {}", dt.date.to_ymd_string(), dt.time.to_hms_string());
     }
     loop {
         let interactions = read_logs(&datetime, &args.ausearch);
