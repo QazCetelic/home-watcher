@@ -1,6 +1,5 @@
 use rusqlite::Connection;
-use crate::ausearch_parse::Interaction;
-use crate::time::{Date, DateTime, Time};
+use crate::time::DateTime;
 
 pub fn open_db(path: &str) -> Connection {
     let conn = Connection::open(path).expect("Failed to open database");
@@ -28,6 +27,19 @@ pub fn add_entry(conn: &Connection, file_path: &str, executable: &str, datetime:
              count = count + 1;
     ", (file_path, executable, datetime.as_integer()),
     ).expect("Failed to insert interaction into database");
+}
+
+pub fn query_all_entries(conn: &Connection) -> Vec<(String, String, DateTime, DateTime, usize)> {
+    let mut stmt = conn.prepare("SELECT file, executable, added_at, changed_at, count FROM files").expect("Failed to prepare query");
+    let rows = stmt.query_map([], |row| {
+        let file: String = row.get(0)?;
+        let executable: String = row.get(1)?;
+        let added_at_int: usize = row.get(2)?;
+        let changed_at_int: usize = row.get(3)?;
+        let count: usize = row.get(4)?;
+        Ok((file, executable, DateTime::from_integer(added_at_int), DateTime::from_integer(changed_at_int), count))
+    }).expect("Failed to execute query");
+    return rows.map(|r| r.expect("Failed to get row")).collect();
 }
 
 pub fn query_latest_time(conn: &Connection) -> Result<Option<DateTime>, String> {

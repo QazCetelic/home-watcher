@@ -1,19 +1,25 @@
+use log::error;
+use log::info;
+
 use crate::standard_dirs::StandardDirectories;
 use crate::user_env::UserEnvironment;
 use std::fs::OpenOptions;
 use std::io::BufRead;
+use std::os::unix::fs::chown;
+use std::os::unix::fs::MetadataExt;
 use std::path::PathBuf;
 use std::process::Command;
+use std::process::Stdio;
 
 // TODO Documents is sometimes abused to store program files, create an option to watch it regardless
 pub const DEFAULT_DIRECTORIES: [&str; 6] = ["Documents", "Downloads", "Pictures", "Videos", "Desktop", "Music"];
 
 pub fn get_user() -> String {
-    if let Ok(logname_output) = Command::new("logname").output() {
+    if let Ok(logname_output) = Command::new("logname").stderr(Stdio::null()).output() {
         String::from_utf8(logname_output.stdout).expect("Failed to get stdout from logname").trim_end().to_string()
     }
     else {
-        let who_output = Command::new("who").output().expect("Failed to execute who");
+        let who_output = Command::new("who").stderr(Stdio::null()).output().expect("Failed to execute who");
         let mut lines = who_output.stdout.lines();
         let first_line = lines.next().unwrap().unwrap();
         first_line.split_once(" ").unwrap().0.to_string()
@@ -48,25 +54,22 @@ pub fn get_excluded_directories(std_dirs: &StandardDirectories, args_excluded_di
     return excluded_dirs;
 }
 
-pub fn create_db_file(std_dirs: &StandardDirectories, user: &str) -> String {
+pub fn create_db_file(std_dirs: &StandardDirectories) -> String {
     let db_path = get_db_path(&std_dirs);
-    println!("Opening database at {db_path:?}");
-    let already_existed = std::fs::exists(&db_path).expect("Failed to check if DB file exists");
+    info!("Opening database at {db_path:?}");
+
     OpenOptions::new()
         .write(true)
         .create(true)
         .open(&db_path)
         .expect("Failed to open DB file");
-    // Set file ownership back to user
-    if !already_existed {
-        let chown_output = Command::new("chown")
-            .arg(format!("{}:{}", user, user))
-            .arg(&db_path)
-            .output();
-        let success = chown_output.map(|out| out.status.success()).unwrap_or(false);
-        if !success {
-            eprintln!("Failed to set ownership of DB file at {db_path:?} to the user '{user}'");
-        }
+    
+    let home_metadata = std::fs::metadata(std_dirs.home()).expect("Failed to stat home directory");
+    let uid = home_metadata.uid();
+    let gid = home_metadata.gid();
+    if let Err(e) = chown(&db_path, Some(uid), Some(gid)) {
+        error!("Failed to set ownership of DB file at {db_path:?} to UID {uid}:{gid}, error: {e:?}");
     }
+
     db_path
 }
