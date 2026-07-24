@@ -25,6 +25,30 @@ Note: Common user directories like `Documents`, `Downloads`, `Pictures`, `Videos
 
 ## Installation
 
+### NixOS
+
+```nix
+{ config, pkgs, ... }:
+
+{
+  imports =
+    [
+      (import (builtins.fetchGit {
+        url = "https://github.com/QazCetelic/home-watcher.git";
+        rev = "e897e69c9d869d6a6a736b0f08823d683e6de106";
+      } + "/nix/home-watcher.nix"))
+    ];
+
+  services.home-watcher = {
+    enable = true;
+    user = "your_user";
+  };
+}
+
+```
+
+### Other Linux
+
 1. **Build from source**  
    Clone the repository and compile the Rust project:
    ```bash
@@ -40,7 +64,7 @@ Note: Common user directories like `Documents`, `Downloads`, `Pictures`, `Videos
    sudo mv target/release/home-watcher /usr/local/bin/
    ```
    
-3. **(Optional) Install the systemd service**  
+3. **(Optional) Install the systemd service to automatically start it on startup**  
    Make sure to change `<USER>` in `home-watcher.service`
    ```bash
    sudo cp ./home-watcher.service /etc/systemd/system/home-watcher.service
