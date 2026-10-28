@@ -1,7 +1,11 @@
+use log::{error, info};
+use microxdg::Xdg;
 use rusqlite::Connection;
-use crate::time::DateTime;
+use crate::{time::DateTime, util::get_db_path};
+use std::{fs::OpenOptions, os::unix::fs::{MetadataExt, chown}, path::{PathBuf}};
 
-pub fn open_db(path: &str) -> Connection {
+pub fn open_db(xdg_dirs: &Xdg) -> Connection {
+    let path = provide_db_file(xdg_dirs);
     let conn = Connection::open(path).expect("Failed to open database");
     conn.execute(
         "CREATE TABLE IF NOT EXISTS files (
@@ -15,6 +19,29 @@ pub fn open_db(path: &str) -> Connection {
         (),
     ).expect("Failed to create files table");
     return conn;
+}
+
+/// Returns a DB file path, creates file and sets permissions
+fn provide_db_file(xdg_dirs: &Xdg) -> PathBuf {
+    let db_path = get_db_path(xdg_dirs);
+
+    OpenOptions::new()
+        .write(true)
+        .create(true)
+        .open(&db_path)
+        .expect("Failed to open DB file");
+    
+    let home_metadata = std::fs::metadata(xdg_dirs.home()).expect("Failed to stat home directory");
+    let uid = home_metadata.uid();
+    let gid = home_metadata.gid();
+    if let Err(e) = chown(&db_path, Some(uid), Some(gid)) {
+        error!("Failed to set ownership of DB file at {db_path:?} to UID {uid}:{gid}, error: {e:?}");
+    }
+    else {
+        info!("Set ownership of DB file at {db_path:?} to UID {uid}:{gid}")
+    }
+
+    db_path
 }
 
 pub fn add_entry(conn: &Connection, file_path: &str, executable: &str, datetime: &DateTime) {
@@ -40,13 +67,4 @@ pub fn query_all_entries(conn: &Connection) -> Vec<(String, String, DateTime, Da
         Ok((file, executable, DateTime::from_integer(added_at_int), DateTime::from_integer(changed_at_int), count))
     }).expect("Failed to execute query");
     return rows.map(|r| r.expect("Failed to get row")).collect();
-}
-
-pub fn query_latest_time(conn: &Connection) -> Result<Option<DateTime>, String> {
-    let mut stmt = conn.prepare("SELECT MAX(changed_at) as latest FROM files").map_err(|_| "Failed to prepare query".to_string())?;
-    let mut rows = stmt.query([]).map_err(|_| "Failed to execute query")?;
-    let row = rows.next().map_err(|_| "Failed to get row")?.unwrap();
-    let datetime_int: Option<usize> = row.get(0).map_err(|_| "Failed to get column".to_string())?;
-    let datetime = datetime_int.map(|int| DateTime::from_integer(int));
-    Ok(datetime)
 }

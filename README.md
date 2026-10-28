@@ -14,14 +14,14 @@ sudo home-watcher
 | Option                         | Description                                                                                  | Default                         |
 |--------------------------------|----------------------------------------------------------------------------------------------|---------------------------------|
 | `-d`, `--excluded-dirs`        | Specify additional directories to exclude from monitoring (relative to your home directory). | None                            |
+| `--include-dirs`               | Directories to watch even though they are excluded by default (e.g. `.config`).               | None                            |
 | `-e`, `--excluded-executables` | Specify executables to exclude from monitoring                                               | None                            |
 | `-l`, `--log-file`             | Path to the SQLite database file for logging.                                                | `XDG_DATA_HOME/home-watcher.db` |
-| `-i`, `--interval`             | Interval (in milliseconds) to check audit logs.                                              | 1500                            |
 | `-u`, `--user`                 | The user to watch the home directory of.                                                     | Executing user                  |
 | `-h`, `--help`                 | Display the help message with usage details.                                                 |                                 |
 | `-V`, `--version`              | Display the current version of `home-watcher`.                                               |                                 |
 
-Note: Common user directories like `Documents`, `Downloads`, `Pictures`, `Videos`, `Desktop`, and `Music` are excluded by default.
+Note: Common user directories like `Documents`, `Downloads`, `Pictures`, `Videos`, `Desktop`, and `Music` are excluded by default, along with the XDG base directories (`~/.config`, `~/.cache`, `~/.local/share`, `~/.local/state`). Use `--include-dirs` to watch one of them anyway.
 
 ## Installation
 

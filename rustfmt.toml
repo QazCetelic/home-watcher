@@ -1,0 +1,3 @@
+fn_params_layout = "Compressed"
+max_width = 180
+use_small_heuristics = "Max"
