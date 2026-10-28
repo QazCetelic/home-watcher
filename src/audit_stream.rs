@@ -300,6 +300,13 @@ pub fn spawn_audit_listener() -> io::Result<tokio::sync::mpsc::UnboundedReceiver
             }) {
                 Ok(Ok(n)) => n,
                 Ok(Err(e)) => {
+                    // EINTR: interrupted before anything was read. ENOBUFS: the kernel dropped datagrams
+                    // because this socket's receive buffer was full. Either way the socket stays usable.
+                    if e.kind() == io::ErrorKind::Interrupted || e.raw_os_error() == Some(libc::ENOBUFS) {
+                        log::warn!("audit netlink recv: {e}");
+                        continue;
+                    }
+                    // Any other error means the socket is broken.
                     log::error!("audit netlink recv error: {e}");
                     break;
                 }

@@ -1,9 +1,8 @@
 use crate::database::{open_db};
-use crate::util::{get_default_db_path, get_excluded_directories, get_user, get_xdg_dirs};
+use crate::util::{get_excluded_directories, get_user, get_xdg_dirs};
 use clap::{Parser, Subcommand};
 use log::{debug, info};
 use std::collections::HashSet;
-use std::path::PathBuf;
 
 mod file_audit;
 mod audit_stream;
@@ -25,10 +24,6 @@ struct Args {
     /// Directories to watch even though they are excluded by default (e.g. `.config`), relative to the user home
     #[clap(long, value_delimiter = ' ', num_args = 1..)]
     pub include_dirs: Option<Vec<String>>,
-
-    /// Path for database file
-    #[clap(short, long, default_value = get_default_db_path().into_os_string())]
-    pub log_file: PathBuf,
 
     /// The user to watch the home directory of
     #[clap(short, long, default_value_t = get_user())]
@@ -102,10 +97,7 @@ fn monitor(args: Args) {
     file_audit::ensure_audit_rules_exist(&auditd_rules, &args.auditctl)
         .expect("Failed to ensure audit rules are active");
 
-    let rt = tokio::runtime::Builder::new_current_thread()
-        .enable_io()
-        .build()
-        .expect("Failed to create tokio runtime");
+    let rt = tokio::runtime::Runtime::new().expect("Failed to create tokio runtime");
     rt.block_on(async {
         // Start the netlink audit listener (real-time, no polling) inside the runtime so that tokio::spawn() has an active context.
         let mut rx = audit_stream::spawn_audit_listener()
@@ -135,4 +127,6 @@ fn monitor(args: Args) {
             );
         }
     });
+
+    std::process::exit(1);
 }

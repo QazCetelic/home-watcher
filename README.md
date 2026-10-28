@@ -16,8 +16,8 @@ sudo home-watcher
 | `-d`, `--excluded-dirs`        | Specify additional directories to exclude from monitoring (relative to your home directory). | None                            |
 | `--include-dirs`               | Directories to watch even though they are excluded by default (e.g. `.config`).               | None                            |
 | `-e`, `--excluded-executables` | Specify executables to exclude from monitoring                                               | None                            |
-| `-l`, `--log-file`             | Path to the SQLite database file for logging.                                                | `XDG_DATA_HOME/home-watcher.db` |
 | `-u`, `--user`                 | The user to watch the home directory of.                                                     | Executing user                  |
+| `--auditctl`                   | Path to the `auditctl` binary.                                                               | `/usr/sbin/auditctl`            |
 | `-h`, `--help`                 | Display the help message with usage details.                                                 |                                 |
 | `-V`, `--version`              | Display the current version of `home-watcher`.                                               |                                 |
 
@@ -72,7 +72,8 @@ Note: Common user directories like `Documents`, `Downloads`, `Pictures`, `Videos
    ```
 
 ## Database
-The database contains an `files` table with the following data:
+The database is stored at `$XDG_DATA_HOME/home-watcher.db` (usually `~/.local/share/home-watcher.db`).
+It contains an `files` table with the following data:
 
 | **Name**         | **Column**      | **Description**                                                          |
 |------------------|-----------------|--------------------------------------------------------------------------|

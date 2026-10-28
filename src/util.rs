@@ -45,11 +45,6 @@ fn user_directories(xdg_dirs: &Xdg) -> Vec<PathBuf> {
 pub fn get_db_path(xdg_dirs: &Xdg) -> PathBuf {
     data_home(xdg_dirs).join(HOME_WATCHER_DB_FILE)
 }
-pub fn get_default_db_path() -> PathBuf {
-    let user = get_user();
-    let xdg_dirs = get_xdg_dirs(&user);
-    get_db_path(&xdg_dirs)
-}
 
 pub fn get_excluded_directories(
     xdg_dirs: &Xdg,

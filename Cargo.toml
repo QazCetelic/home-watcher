@@ -10,12 +10,12 @@ lto = true
 codegen-units = 1
 
 [dependencies]
-clap = { version = "4.6.4", features = ["derive", "string", "env"] }
+clap = { version = "4.6.4", features = ["derive", "env"] }
 rusqlite = { version = "0.33.0", features = ["bundled"] }
 log = "0.4.33"
 env_logger = { version = "0.11.11", default-features = false, features = ["humantime"] }
 microxdg = "0.2.0"
 uzers = { version = "0.12.2", default-features = false }
-tokio = { version = "1", features = ["rt", "sync", "net"] }
+tokio = { version = "1", features = ["rt", "rt-multi-thread", "sync", "net"] }
 libc = "0.2"
 linux-audit-parser = "0.2"

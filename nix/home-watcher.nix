@@ -92,7 +92,6 @@ in {
         ExecStart = let
           args = lib.concatStringsSep " " (
             [ "${cfg.package}/bin/home-watcher" "--user" cfg.user ]
-            ++ [ "--log-file" "/home/${cfg.user}/.local/share/home-watcher.db" ]
             ++ builtins.map (d: "--excluded-dirs ${d}") cfg.excludedDirs
             ++ builtins.map (d: "--include-dirs ${d}") cfg.includeDirs
             ++ builtins.map (e: "--excluded-executables ${e}") cfg.excludedExecutables
