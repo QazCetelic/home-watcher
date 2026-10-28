@@ -53,14 +53,9 @@ fn main() {
     env_logger::init();
 
     let args = Args::parse();
-    if let Some(command) = &args.command {
-        match command {
-            Commands::Show => show(args),
-            Commands::Monitor => monitor(args),
-        }
-    }
-    else {
-        monitor(args);
+    match args.command.as_ref() {
+        Some(Commands::Show) => show(args),
+        _ => monitor(args)
     }
 }
 
@@ -107,22 +102,21 @@ fn monitor(args: Args) {
     file_audit::ensure_audit_rules_exist(&auditd_rules, &args.auditctl)
         .expect("Failed to ensure audit rules are active");
 
-    let rt = tokio::runtime::Runtime::new().expect("Failed to create tokio runtime");
+    let rt = tokio::runtime::Builder::new_current_thread()
+        .enable_io()
+        .build()
+        .expect("Failed to create tokio runtime");
     rt.block_on(async {
         // Start the netlink audit listener (real-time, no polling) inside the runtime so that tokio::spawn() has an active context.
-        let rx = audit_stream::spawn_audit_listener()
+        let mut rx = audit_stream::spawn_audit_listener()
             .expect("Failed to create audit netlink listener (try running as root)");
-
-        use tokio_stream::wrappers::UnboundedReceiverStream;
-        use futures::StreamExt;
 
         // The kernel matches `-F dir=` against the whole syscall context and
         // then reports every path in it, so events can still carry paths from
         // outside the watched tree (e.g. /tmp, /proc). Enforce the boundary here.
         let home_prefix = format!("{}/", home.trim_end_matches('/'));
 
-        let mut stream = UnboundedReceiverStream::new(rx);
-        while let Some(interaction) = stream.next().await {
+        while let Some(interaction) = rx.recv().await {
             if !interaction.file.starts_with(&home_prefix) {
                 debug!("Ignoring path outside {}: {}", home, interaction.file);
                 continue;
