@@ -57,7 +57,7 @@ pub fn add_entry(conn: &Connection, file_path: &str, executable: &str, datetime:
 }
 
 pub fn query_all_entries(conn: &Connection) -> Vec<(String, String, DateTime, DateTime, usize)> {
-    let mut stmt = conn.prepare("SELECT file, executable, added_at, changed_at, count FROM files").expect("Failed to prepare query");
+    let mut stmt = conn.prepare("SELECT file, executable, added_at, changed_at, count FROM files ORDER BY changed_at").expect("Failed to prepare query");
     let rows = stmt.query_map([], |row| {
         let file: String = row.get(0)?;
         let executable: String = row.get(1)?;
@@ -66,5 +66,5 @@ pub fn query_all_entries(conn: &Connection) -> Vec<(String, String, DateTime, Da
         let count: usize = row.get(4)?;
         Ok((file, executable, DateTime::from_integer(added_at_int), DateTime::from_integer(changed_at_int), count))
     }).expect("Failed to execute query");
-    return rows.map(|r| r.expect("Failed to get row")).collect();
+    rows.map(|r| r.expect("Failed to get row")).collect()
 }

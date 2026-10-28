@@ -65,77 +65,32 @@ fn main() {
 }
 
 fn show(args: Args) {
-    let xdg_dirs = get_xdg_dirs(&args.user);
-    let conn = open_db(&xdg_dirs);
-    let entries = database::query_all_entries(&conn);
+    let conn = open_db(&get_xdg_dirs(&args.user));
+    let mut rows = vec![[
+        "added_at".to_string(),
+        "changed_at".to_string(),
+        "count".to_string(),
+        "file".to_string(),
+        "executable".to_string(),
+    ]];
+    rows.extend(database::query_all_entries(&conn).iter().map(|(file, exec, added, changed, count)| {
+        [added.to_string(), changed.to_string(), count.to_string(), file.clone(), exec.clone()]
+    }));
 
-    // Calculate column widths. Timestamps and count come first so the
-    // variable-length paths stay at the end of the line.
-    let mut max_added = "added_at".len();
-    let mut max_changed = "changed_at".len();
-    let mut max_count = "count".len();
-    let mut max_file = "file".len();
-    let mut max_exec = "executable".len();
-
-    let formatted: Vec<(String, String, String, String, String)> = entries
-        .iter()
-        .map(|(file, executable, added_at, changed_at, count)| {
-            let added_s = added_at.to_string();
-            let changed_s = changed_at.to_string();
-            let count_s = count.to_string();
-            let file_s = file.clone();
-            let exec_s = executable.clone();
-            max_added = max_added.max(added_s.len());
-            max_changed = max_changed.max(changed_s.len());
-            max_count = max_count.max(count_s.len());
-            max_file = max_file.max(file_s.len());
-            max_exec = max_exec.max(exec_s.len());
-            (added_s, changed_s, count_s, file_s, exec_s)
-        })
-        .collect();
-
-    println!(
-        "| {:<added_w$} | {:<changed_w$} | {:>count_w$} | {:<file_w$} | {:<exec_w$} |",
-        "added_at",
-        "changed_at",
-        "count",
-        "file",
-        "executable",
-        added_w = max_added,
-        changed_w = max_changed,
-        count_w = max_count,
-        file_w = max_file,
-        exec_w = max_exec,
-    );
-    for (added_at, changed_at, count, file, executable) in &formatted {
+    let widths: [usize; 5] = std::array::from_fn(|i| rows.iter().map(|row| row[i].len()).max().unwrap_or(0));
+    for row in &rows {
         println!(
-            "| {:<added_w$} | {:<changed_w$} | {:>count_w$} | {:<file_w$} | {:<exec_w$} |",
-            added_at,
-            changed_at,
-            count,
-            file,
-            executable,
-            added_w = max_added,
-            changed_w = max_changed,
-            count_w = max_count,
-            file_w = max_file,
-            exec_w = max_exec,
+            "| {:<w0$} | {:<w1$} | {:>w2$} | {:<w3$} | {:<w4$} |",
+            row[0], row[1], row[2], row[3], row[4],
+            w0 = widths[0], w1 = widths[1], w2 = widths[2], w3 = widths[3], w4 = widths[4],
         );
     }
 }
 
 fn monitor(args: Args) {
-    let mut excluded_executables: HashSet<String> = Default::default();
-    let excluded_executables_str: String;
-    if let Some(excluded) = args.excluded_executables {
-        excluded_executables_str = excluded.join(", ");
-        for executable in excluded {
-            excluded_executables.insert(executable);
-        }
-    } else {
-        excluded_executables_str = "".to_string();
-    }
-    info!("Excluding executables: {excluded_executables_str}");
+    let excluded = args.excluded_executables.unwrap_or_default();
+    info!("Excluding executables: {}", excluded.join(", "));
+    let excluded_executables: HashSet<String> = excluded.into_iter().collect();
     let xdg_dirs = get_xdg_dirs(&args.user);
     info!("Watching {}", xdg_dirs.home().display());
     let home = xdg_dirs.home().to_string_lossy().into_owned();

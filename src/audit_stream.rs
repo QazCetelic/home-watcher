@@ -25,12 +25,7 @@ fn value_to_string(value: &Value<'_>) -> Option<String> {
     match value {
         Value::Str(s, _) => Some(String::from_utf8_lossy(s).into_owned()),
         Value::Owned(v) => Some(String::from_utf8_lossy(v).into_owned()),
-        Value::Segments(segs) => Some(
-            segs.iter()
-                .map(|s| String::from_utf8_lossy(s))
-                .collect::<Vec<_>>()
-                .concat(),
-        ),
+        Value::Segments(segs) => Some(segs.iter().map(|s| String::from_utf8_lossy(s)).collect()),
         Value::Number(n) => Some(n.to_string()),
         _ => None,
     }

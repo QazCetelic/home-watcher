@@ -8,7 +8,7 @@ use uzers::get_user_by_name;
 use uzers::os::unix::UserExt;
 
 // TODO Documents is sometimes abused to store program files, create an option to watch it regardless
-pub const DEFAULT_DIRECTORIES: [&str; 6] = ["Documents", "Downloads", "Pictures", "Videos", "Desktop", "Music"];
+pub const DEFAULT_DIRECTORIES: [&str; 7] = ["Documents", "Downloads", "Pictures", "Videos", "Desktop", "Music", ".var"];
 
 /// The user who started the session; the effective user if there is none (e.g. systemd).
 pub fn get_user() -> String {
@@ -65,12 +65,7 @@ pub fn get_excluded_directories(
     }
 
     let mut excluded_dirs: BTreeSet<String> = BTreeSet::new();
-    if let Some(dirs) = args_excluded_dirs {
-        for dir in dirs {
-            excluded_dirs.insert(format!("{}/{}", xdg_dirs.home().display(), dir));
-        }
-    }
-    for dir in DEFAULT_DIRECTORIES {
+    for dir in args_excluded_dirs.iter().flatten().map(String::as_str).chain(DEFAULT_DIRECTORIES) {
         excluded_dirs.insert(format!("{}/{}", xdg_dirs.home().display(), dir));
     }
     for dir in user_directories(xdg_dirs) {

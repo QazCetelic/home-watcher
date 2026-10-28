@@ -42,21 +42,16 @@ impl DateTime {
         (((((self.date.year * 100) + self.date.month) * 100 + self.date.day) * 100 + self.time.hour) * 100 + self.time.minute) * 100 + self.time.second
     }
     pub fn from_integer(integer: usize) -> DateTime {
+        let mut parts = [0; 5];
         let mut tmp = integer;
-        let seconds = tmp % 100;
-        tmp /= 100;
-        let minutes = tmp % 100;
-        tmp /= 100;
-        let hours = tmp % 100;
-        let time = Time::from_hms(hours, minutes, seconds);
-        tmp /= 100;
-        let days = tmp % 100;
-        tmp /= 100;
-        let months = tmp % 100;
-        tmp /= 100;
-        let years = tmp;
-        let date = Date::from_ymd(years, months, days);
-        DateTime { date, time }
+        for part in parts.iter_mut().rev() {
+            *part = tmp % 100;
+            tmp /= 100;
+        }
+        DateTime {
+            date: Date::from_ymd(tmp, parts[0], parts[1]),
+            time: Time::from_hms(parts[2], parts[3], parts[4]),
+        }
     }
     pub fn to_string(&self) -> String { format!("{:02}-{:02}-{:02} {:02}:{:02}:{:02}", self.date.year, self.date.month, self.date.day, self.time.hour, self.time.minute, self.time.second) }
 }

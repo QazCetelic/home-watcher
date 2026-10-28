@@ -21,7 +21,7 @@ sudo home-watcher
 | `-h`, `--help`                 | Display the help message with usage details.                                                 |                                 |
 | `-V`, `--version`              | Display the current version of `home-watcher`.                                               |                                 |
 
-Note: Common user directories like `Documents`, `Downloads`, `Pictures`, `Videos`, `Desktop`, and `Music` are excluded by default, along with the XDG base directories (`~/.config`, `~/.cache`, `~/.local/share`, `~/.local/state`). Use `--include-dirs` to watch one of them anyway.
+Note: Common user directories like `Documents`, `Downloads`, `Pictures`, `Videos`, `Desktop`, and `Music` are excluded by default, along with `~/.var` (Flatpak) and the XDG base directories (`~/.config`, `~/.cache`, `~/.local/share`, `~/.local/state`). Use `--include-dirs` to watch one of them anyway.
 
 ## Installation
 
