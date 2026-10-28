@@ -1,21 +1,12 @@
-use std::str::FromStr;
+// TODO store unix timestamp instead of the formatted date with new DB schema
 
-#[derive(Clone)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Date {
     year: usize,
     month: usize,
     day: usize,
 }
 impl Date {
-    /// e.g. 2025-01-25
-    pub(crate) fn from_str(str: &str) -> Option<Date> {
-        let split = str.split("-").collect::<Vec<&str>>();
-        Some(Date {
-            year: usize::from_str(split.get(0)?).ok()?,
-            month: usize::from_str(split.get(1)?).ok()?,
-            day: usize::from_str(split.get(2)?).ok()?,
-        })
-    }
     pub fn from_ymd(year: usize, month: usize, day: usize) -> Date {
         Date {
             year,
@@ -23,28 +14,15 @@ impl Date {
             day,
         }
     }
-    #[allow(dead_code)] pub fn year(&self) -> usize { self.year }
-    #[allow(dead_code)] pub fn month(&self) -> usize { self.month }
-    #[allow(dead_code)] pub fn day(&self) -> usize { self.day }
-    pub fn to_ymd_string(&self) -> String { format!("{:02}-{:02}-{:02}", self.year, self.month, self.day) }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Time {
     hour: usize,
     minute: usize,
     second: usize,
 }
 impl Time {
-    /// e.g. 12:55:03
-    pub(crate) fn from_str(str: &str) -> Option<Time> {
-        let split = str.split(":").collect::<Vec<&str>>();
-        Some(Time {
-            hour: usize::from_str(split.get(0)?).ok()?,
-            minute: usize::from_str(split.get(1)?).ok()?,
-            second: usize::from_str(split.get(2)?).ok()?,
-        })
-    }
     pub fn from_hms(hour: usize, minute: usize, second: usize) -> Time {
         Time {
             hour,
@@ -52,13 +30,9 @@ impl Time {
             second,
         }
     }
-    #[allow(dead_code)] pub fn hour(&self) -> usize { self.hour }
-    #[allow(dead_code)] pub fn minute(&self) -> usize { self.minute }
-    #[allow(dead_code)] pub fn second(&self) -> usize { self.second }
-    pub fn to_hms_string(&self) -> String { format!("{:02}:{:02}:{:02}", self.hour, self.minute, self.second) }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct DateTime {
     pub date: Date,
     pub time: Time,
@@ -68,21 +42,16 @@ impl DateTime {
         (((((self.date.year * 100) + self.date.month) * 100 + self.date.day) * 100 + self.time.hour) * 100 + self.time.minute) * 100 + self.time.second
     }
     pub fn from_integer(integer: usize) -> DateTime {
+        let mut parts = [0; 5];
         let mut tmp = integer;
-        let seconds = tmp % 100;
-        tmp /= 100;
-        let minutes = tmp % 100;
-        tmp /= 100;
-        let hours = tmp % 100;
-        let time = Time::from_hms(hours, minutes, seconds);
-        tmp /= 100;
-        let days = tmp % 100;
-        tmp /= 100;
-        let months = tmp % 100;
-        tmp /= 100;
-        let years = tmp;
-        let date = Date::from_ymd(years, months, days);
-        DateTime { date, time }
+        for part in parts.iter_mut().rev() {
+            *part = tmp % 100;
+            tmp /= 100;
+        }
+        DateTime {
+            date: Date::from_ymd(tmp, parts[0], parts[1]),
+            time: Time::from_hms(parts[2], parts[3], parts[4]),
+        }
     }
     pub fn to_string(&self) -> String { format!("{:02}-{:02}-{:02} {:02}:{:02}:{:02}", self.date.year, self.date.month, self.date.day, self.time.hour, self.time.minute, self.time.second) }
 }

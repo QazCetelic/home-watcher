@@ -1,75 +1,72 @@
-use log::error;
-use log::info;
-
-use crate::standard_dirs::StandardDirectories;
-use crate::user_env::UserEnvironment;
-use std::fs::OpenOptions;
-use std::io::BufRead;
-use std::os::unix::fs::chown;
-use std::os::unix::fs::MetadataExt;
+use microxdg::Xdg;
+use std::collections::BTreeSet;
 use std::path::PathBuf;
 use std::process::Command;
 use std::process::Stdio;
+use uzers::get_current_username;
+use uzers::get_user_by_name;
+use uzers::os::unix::UserExt;
 
 // TODO Documents is sometimes abused to store program files, create an option to watch it regardless
-pub const DEFAULT_DIRECTORIES: [&str; 6] = ["Documents", "Downloads", "Pictures", "Videos", "Desktop", "Music"];
+pub const DEFAULT_DIRECTORIES: [&str; 7] = ["Documents", "Downloads", "Pictures", "Videos", "Desktop", "Music", ".var"];
 
+/// The user who started the session; the effective user if there is none (e.g. systemd).
 pub fn get_user() -> String {
-    if let Ok(logname_output) = Command::new("logname").stderr(Stdio::null()).output() {
-        String::from_utf8(logname_output.stdout).expect("Failed to get stdout from logname").trim_end().to_string()
-    }
-    else {
-        let who_output = Command::new("who").stderr(Stdio::null()).output().expect("Failed to execute who");
-        let mut lines = who_output.stdout.lines();
-        let first_line = lines.next().unwrap().unwrap();
-        first_line.split_once(" ").unwrap().0.to_string()
+    match Command::new("logname").stderr(Stdio::null()).output() {
+        Ok(out) if out.status.success() => String::from_utf8_lossy(&out.stdout).trim().to_string(),
+        _ => get_current_username()
+            .map(|name| name.to_string_lossy().into_owned())
+            .unwrap_or_else(|| "root".to_string()),
     }
 }
 
 const HOME_WATCHER_DB_FILE: &str = "home-watcher.db";
-pub fn get_db_path(xdg_dirs: &StandardDirectories) -> String {
-    let data_home = xdg_dirs.data_home();
-    format!("{data_home}/{HOME_WATCHER_DB_FILE}")
-}
-pub fn get_default_db_path() -> PathBuf {
-    let user = get_user();
-    let user_env = UserEnvironment::from_user(&user).expect("Failed to get user env");
-    let std_dirs = StandardDirectories::new(&user, &user_env);
-    PathBuf::from(get_db_path(&std_dirs))
+
+/// Resolves the XDG base directories for `user`.
+pub fn get_xdg_dirs(user: &str) -> Xdg {
+    let user = get_user_by_name(user).expect("unknown user");
+    Xdg::with_home(user.home_dir())
 }
 
-pub fn get_excluded_directories(std_dirs: &StandardDirectories, args_excluded_dirs: &Option<Vec<String>>) -> Vec<String> {
-    let mut excluded_dirs: Vec<String> = Vec::new();
-    if let Some(dirs) = args_excluded_dirs {
+fn data_home(xdg_dirs: &Xdg) -> PathBuf {
+    xdg_dirs.data().unwrap_or_else(|_| xdg_dirs.home().join(".local/share"))
+}
+
+/// The user-specific XDG base directories, all of which are excluded from monitoring.
+fn user_directories(xdg_dirs: &Xdg) -> Vec<PathBuf> {
+    vec![
+        xdg_dirs.config().unwrap_or_else(|_| xdg_dirs.home().join(".config")),
+        xdg_dirs.cache().unwrap_or_else(|_| xdg_dirs.home().join(".cache")),
+        data_home(xdg_dirs),
+        xdg_dirs.state().unwrap_or_else(|_| xdg_dirs.home().join(".local/state")),
+    ]
+}
+
+pub fn get_db_path(xdg_dirs: &Xdg) -> PathBuf {
+    data_home(xdg_dirs).join(HOME_WATCHER_DB_FILE)
+}
+
+pub fn get_excluded_directories(
+    xdg_dirs: &Xdg,
+    args_excluded_dirs: &Option<Vec<String>>,
+    args_include_dirs: &Option<Vec<String>>,
+) -> Vec<String> {
+    // Absolute paths to keep watched even though they are excluded by default.
+    let mut reincluded: BTreeSet<String> = BTreeSet::new();
+    if let Some(dirs) = args_include_dirs {
         for dir in dirs {
-            excluded_dirs.push(format!("{}/{}", std_dirs.home(), dir));
+            reincluded.insert(format!("{}/{}", xdg_dirs.home().display(), dir));
         }
     }
-    for dir in DEFAULT_DIRECTORIES {
-        excluded_dirs.push(format!("{}/{}", std_dirs.home(), dir));
-    }
-    for dir in std_dirs.all_subdirectories() {
-        excluded_dirs.push(dir.to_string());
-    }
-    return excluded_dirs;
-}
 
-pub fn create_db_file(std_dirs: &StandardDirectories) -> String {
-    let db_path = get_db_path(&std_dirs);
-    info!("Opening database at {db_path:?}");
-
-    OpenOptions::new()
-        .write(true)
-        .create(true)
-        .open(&db_path)
-        .expect("Failed to open DB file");
-    
-    let home_metadata = std::fs::metadata(std_dirs.home()).expect("Failed to stat home directory");
-    let uid = home_metadata.uid();
-    let gid = home_metadata.gid();
-    if let Err(e) = chown(&db_path, Some(uid), Some(gid)) {
-        error!("Failed to set ownership of DB file at {db_path:?} to UID {uid}:{gid}, error: {e:?}");
+    let mut excluded_dirs: BTreeSet<String> = BTreeSet::new();
+    for dir in args_excluded_dirs.iter().flatten().map(String::as_str).chain(DEFAULT_DIRECTORIES) {
+        excluded_dirs.insert(format!("{}/{}", xdg_dirs.home().display(), dir));
+    }
+    for dir in user_directories(xdg_dirs) {
+        excluded_dirs.insert(dir.to_string_lossy().into_owned());
     }
 
-    db_path
+    excluded_dirs.retain(|dir| !reincluded.contains(dir));
+    excluded_dirs.into_iter().collect()
 }

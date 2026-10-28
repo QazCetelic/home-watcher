@@ -12,10 +12,6 @@ let
     cargoLock.lockFile = ../Cargo.lock;
 
     nativeBuildInputs = [ pkgs.pkg-config ];
-    buildInputs = [ pkgs.audit ];
-
-    AUDIT_LIB_DIR = "${pkgs.audit}/lib";
-    AUDIT_INC_DIR = "${pkgs.audit}/include";
 
     postInstall = ''
       install -Dm644 ${../home-watcher.service} $out/lib/systemd/system/home-watcher.service
@@ -59,10 +55,14 @@ in {
       description = "Executables to exclude from monitoring entirely (e.g. package managers that write many files)";
     };
 
-    interval = lib.mkOption {
-      type = lib.types.ints.positive;
-      default = 5000;
-      description = "Interval in milliseconds between audit log polls";
+    includeDirs = lib.mkOption {
+      type = lib.types.listOf lib.types.str;
+      default = [ ];
+      example = [ ".config" ];
+      description = ''
+        Directories (relative to the home directory) to watch even though they
+        are excluded by default, such as the XDG base directories.
+      '';
     };
 
     package = lib.mkOption {
@@ -92,16 +92,14 @@ in {
         ExecStart = let
           args = lib.concatStringsSep " " (
             [ "${cfg.package}/bin/home-watcher" "--user" cfg.user ]
-            ++ [ "--log-file" "/home/${cfg.user}/.local/share/home-watcher.db" ]
-            ++ [ "--interval" (toString cfg.interval) ]
             ++ builtins.map (d: "--excluded-dirs ${d}") cfg.excludedDirs
+            ++ builtins.map (d: "--include-dirs ${d}") cfg.includeDirs
             ++ builtins.map (e: "--excluded-executables ${e}") cfg.excludedExecutables
           );
         in "${args}";
         User = "root";
         Environment = [
           "HOME_WATCHER_AUDITCTL=${pkgs.audit}/bin/auditctl"
-          "HOME_WATCHER_AUSEARCH=${pkgs.audit}/bin/ausearch"
           "PATH=/run/wrappers/bin:${pkgs.coreutils}/bin"
         ];
       };
