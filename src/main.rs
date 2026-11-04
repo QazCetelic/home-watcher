@@ -35,8 +35,8 @@ struct Args {
     #[clap(short, long, default_value = get_default_db_path().into_os_string())]
     pub log_file: PathBuf,
 
-    /// Interval to check audit logs in milliseconds
-    #[clap(short, long, default_value_t = 1500)]
+    /// Interval to check audit logs in seconds
+    #[clap(short, long, default_value_t = 15)]
     pub interval: u64,
 
     /// The user to watch the home directory of
@@ -186,6 +186,6 @@ fn monitor(args: Args) {
             database::add_entry(&conn, interaction.file(), interaction.source(), interaction.datetime() );
         }
         datetime = interactions.last().map(|i| DateTime { date: i.date().clone(), time: i.time().clone() } );
-        sleep(Duration::from_millis(args.interval));
+        sleep(Duration::from_secs(args.interval));
     }
 }
